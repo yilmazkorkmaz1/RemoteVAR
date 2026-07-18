@@ -34,6 +34,16 @@ pip install xformers==0.0.28.post3
 
 The released RemoteVAR and decoder-refiner weights are available from our
 [Hugging Face repository](https://huggingface.co/yilmazkorkmaz/RemoteVAR).
+Both checkpoints were trained on the `cd_union` dataset, which combines:
+
+- WHU-CD
+- LEVIR-CD
+- LEVIR-CD+
+- S2Looking
+
+The decoder refiner used cached RemoteVAR predictions generated from the same
+four-dataset training union.
+
 Inference also requires the VQ-VAE checkpoint from the
 [original VAR release](https://github.com/FoundationVision/VAR):
 
