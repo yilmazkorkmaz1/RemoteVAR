@@ -1,11 +1,3 @@
-# data
-
-#dataset_name: coco
-#data:
-#  annotation_path: <COCO_ANNOTATIONS_JSON>
-#  img_dir: <COCO_IMAGE_DIR>
-#  image_size: 256
-
 dataset_name: cd_union
 cd_union_datasets: [whu_cd, levircd, levircdplus, s2looking]  # datasets to include in cd_union
 image_size: 256
