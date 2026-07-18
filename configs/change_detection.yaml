@@ -1,0 +1,133 @@
+# data
+
+#dataset_name: coco
+#data:
+#  annotation_path: <COCO_ANNOTATIONS_JSON>
+#  img_dir: <COCO_IMAGE_DIR>
+#  image_size: 256
+
+dataset_name: cd_union
+cd_union_datasets: [whu_cd, levircd, levircdplus, s2looking]  # datasets to include in cd_union
+image_size: 256
+batch_size: 6
+num_workers: 8
+dataset_root: data
+# wandb logging
+use_wandb: false
+run_name: standard_train_with_all_fp16_double_fusion_with_0.2_exposure_bias_compute_loss_on_everywhere
+wandb_project: RemoteVAR
+wandb_mode: offline
+# training
+num_epochs: 100
+clip: 2.0
+optimizer: adamw
+learning_rate: 1e-4
+weight_decay: 1e-4       # initial weight decay (will decay to weight_decay_end via cosine schedule)
+weight_decay_end: 0.0    # final weight decay at end of training
+lr_scheduler: cos       # custom scheduler: cos, lin, lin0, lin00, exp
+min_lr: 0.0             # absolute LR floor (scheduler will not decay below this)
+wp0: 0.005               # initial LR ratio at warmup start (0.5%)
+wpe: 0.01                # final LR ratio at training end (1%)
+log_interval: 1000
+# Run expensive autoregressive visualization inference during training every N steps.
+# Set <= 0 to disable.
+train_inference_interval_steps: 1000
+# How often to run validation (loss + optional metrics), in epochs.
+val_interval: 1
+save_interval: '100'
+mixed_precision: bf16
+# vq model
+vocab_size: 4096
+z_channels: 32
+ch: 160
+vqvae_pretrained_path: pretrained/vae_ch160v4096z32.pth
+v_patch_nums: [1, 2, 3, 4, 5, 6, 8, 10, 13, 16]
+v_patch_layers: [1, 2, 3, 4, 5, 6, 8, 10, 13, 16]
+depth: 16
+embed_dim: 1024
+num_heads: 16
+cross_attn_inner_dim: 1024
+drop_path_rate: 0.025
+# condiiton model
+condition_model: class_embedder
+num_classes: 1000
+cond_drop_rate: 0.0
+weight_type: effective
+var_pretrained_path: pretrained/d16.pth
+mask_type: change_append
+multi_cond: true
+# dataset filtering
+filter_empty_masks: false
+empty_mask_threshold: 0.1
+use_precomputed_weights: false
+# mask conversion (WHU-CD)
+# If true: converts the binary change mask into an RGB mask where each positive pixel's color
+# is determined by its (quantized) location in the image.
+mask_rgb_by_location: true
+# grid size used for location quantization (int or [gy, gx])
+mask_rgb_grid_size: 11
+# "grid" (idx=y*gx+x) or "mul" (idx=x*y, closer to entityS style)
+mask_rgb_index_mode: grid
+# number of channel levels used to build the RGB colormap; 0 = auto-minimum for unique bins
+mask_rgb_levels: 0
+# augmentation
+enable_random_crop: true
+enable_random_flip: true
+enable_random_rotation: true
+enable_gaussian_blur: true
+enable_color_jitter: true
+color_jitter_probability: 0.8
+color_jitter_brightness: 0.2
+color_jitter_contrast: 0.2
+color_jitter_saturation: 0.2
+color_jitter_hue: 0.05
+# image normalization (pre/post only; mask unaffected). Always clamped to [-1,1] before VQVAE.
+image_normalization: m11   # m11 | dataset
+dataset_stats_max_samples: 500
+dataset_stats_seed: 0
+min_crop_size: 256
+max_crop_size: 256
+# var model
+disable_masking_loss: true
+disable_cross_attention: false
+disable_all_weighting: true
+deterministic: true
+enable_current_scale_tokens: false
+finetune_cross_and_fusion: false
+allow_trainable_encoder: false
+
+# exposure-bias reduction
+noisy_tf_mask_prob: 0.2          # exposure-bias reduction: corrupt GT mask token IDs when building teacher-forcing inputs (typical: 0.1)
+noisy_tf_mask_mode: random       # random | shuffle
+
+# token prediction loss (mask-token loss)
+# - ce: standard cross entropy (default)
+# - focal: focal loss, useful when mask-token classes are highly imbalanced
+loss_type: ce        # ce | focal
+focal_gamma: 2.0     # only used if loss_type=focal
+
+# Validation metrics throttling (only applies when compute_val_metrics=true in the training script)
+# Compute expensive IoU metrics every N epochs (loss is still computed on the full validation set).
+val_metrics_every: 1
+# If >0, compute IoU metrics only on the first N validation batches (loss still uses the full val set).
+val_metrics_max_batches: -1
+
+fusion_downsample_ratios: [1, 1, 1, 1]   # set to [1,1,1,1,1,1] to disable; length must match encoder context levels
+use_high_res_context_levels: false              # if false: legacy 4-level context (64/32/16/16mid); then set fusion_downsample_ratios length to 4
+
+# Fusion-module scaling knobs (optional)
+# - You can set these as scalars (applies to all levels) OR as per-level lists (length must match context levels).
+# - For legacy 4-level context (use_high_res_context_levels=false): level order is [64, 32, 16(pre), 16(post-middle)].
+# - Defaults BEFORE these knobs existed (previous hardcoded behavior):
+#   - fusion_num_heads: 8
+#   - fusion_num_layers: 1
+#   - fusion_cross_inner_dim: default (=dim when reduction=1)
+#   - fusion_use_feature_rectify: false (FeatureRectifyModule not used)
+#   - fusion_downsample_first: false (downsampling applied AFTER fusion)
+fusion_num_heads: 8               # attention heads inside each fusion module (scalar or per-level list)
+fusion_num_layers: 2          # number of CrossPath layers stacked inside each fusion module (scalar or per-level list)
+fusion_cross_inner_dim: null      # optional CrossPath inner dim; null uses default (dim). Can be scalar or per-level list.
+fusion_use_feature_rectify: false # enable FeatureRectifyModule inside fusion (scalar or per-level list)
+fusion_downsample_first: false    # if true, apply fusion_downsample_ratios BEFORE token mixing (recommended for high-res contexts)
+fusion_lr_scale: 1.0              # LR multiplier for fusion_modules.* params (before this knob existed: effectively 1.0)
+fusion_wd_scale: 1.0             # WD multiplier for fusion_modules.* params (tip: set to 1/fusion_lr_scale to keep lr*wd ~ constant)

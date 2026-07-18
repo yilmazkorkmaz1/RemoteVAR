@@ -1,0 +1,40 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# local env / editor
+.venv/
+.env
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# outputs
+experiments/
+predictions/
+conditional_inference/
+wandb/
+viz_indices/
+token_frequencies/
+
+# temporary
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+tmp*.*
+tmp*/
+pymp-*/
+torchelastic_*/
+
+# downloaded weights and generated checkpoints
+pretrained/*.pth
+pretrained/*.pt
+*.safetensors
+optimizer.bin
+random_states_*.pkl
+

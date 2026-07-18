@@ -1,0 +1,17 @@
+# Tested experiment stack: Python 3.9, PyTorch 2.5.1, CUDA 12.1
+torch==2.5.1
+torchvision==0.20.1
+accelerate==1.10.1
+numpy==1.26.4
+opencv-python-headless==4.11.0.86
+Pillow==11.0.0
+ruamel.yaml==0.18.17
+safetensors==0.4.5
+timm==0.6.13
+tqdm==4.67.0
+wandb==0.18.7
+peft==0.13.2
+
+# Optional CUDA acceleration (install separately if compatible with your CUDA/PyTorch):
+# flash-attn==2.7.4.post1
+# xformers==0.0.28.post3
