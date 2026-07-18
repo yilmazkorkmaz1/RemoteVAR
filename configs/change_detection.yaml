@@ -14,7 +14,7 @@ num_workers: 8
 dataset_root: data
 # wandb logging
 use_wandb: false
-run_name: standard_train_with_all_fp16_double_fusion_with_0.2_exposure_bias_compute_loss_on_everywhere
+run_name: remotevar
 wandb_project: RemoteVAR
 wandb_mode: offline
 # training
@@ -88,7 +88,7 @@ dataset_stats_seed: 0
 min_crop_size: 256
 max_crop_size: 256
 # var model
-disable_masking_loss: true
+disable_masking_loss: false
 disable_cross_attention: false
 disable_all_weighting: true
 deterministic: true

@@ -10,6 +10,7 @@
 #   where each file is either a tensor (N,C,16,16) or a dict containing key `mask_fhat`.
 #
 dataset_name: cd_union
+cd_union_datasets: [whu_cd, levircd, levircdplus, s2looking]
 image_size: 256
 batch_size: 4
 num_workers: 8
@@ -26,7 +27,7 @@ max_crop_size: 256
 rotation_angle: 10
 
 # training
-num_epochs: 200
+num_epochs: 50
 learning_rate: 1.0e-4
 weight_decay: 1.0e-4
 weight_decay_end: 0.0
@@ -39,7 +40,7 @@ gradient_accumulation_steps: 1
 mixed_precision: bf16
 seed: 42
 output_dir: experiments
-run_name: decoder_refiner
+run_name: remotevar_decoder_refiner
 
 # wandb (optional)
 use_wandb: true
@@ -56,6 +57,8 @@ val_metrics_max_batches: -1
 save_val_images: true
 val_num_save_samples: 4
 val_viz_every: 1
+viz_target_ratio: 0.5
+viz_fallback_ratio: 0.2
 
 # VQVAE
 vocab_size: 4096
@@ -75,7 +78,7 @@ cond_drop_rate: 0.0
 drop_path_rate: 0.0
 cross_attn_inner_dim: 1024
 disable_cross_attention: false
-dropout: 0.1
+dropout: 0.15
 
 # Loss
 loss_l2_rgb_weight: 0.0
@@ -97,31 +100,31 @@ loss_palette_ce_temp: 0.05
 # Decoder output (1ch logits for BCE-only training)
 decoder_out_channels: 1
 
-# Decoder-refiner scaling knobs (for the *new* skip-fusion modules inside ConditionedDecoder).
-decoder_skip_fuse_extra_depth: 1
-decoder_skip_fuse_extra_width_mult: 4.0
+# The released checkpoint predates the optional extra skip-fuse adapters.
+decoder_skip_fuse_extra_depth: 0
+decoder_skip_fuse_extra_width_mult: 1.0
 
 # Do NOT use the extra RGB->mask head when decoder_out_channels=1
 use_rgb_to_mask_head: false
 rgb_to_mask_head_init: sum_rgb
 
 # Photometric augmentation (OPTIONAL)
-enable_color_jitter: true
+enable_color_jitter: false
 color_jitter_pairwise: true
-color_jitter_probability: 1.0
+color_jitter_probability: 0.8
 color_jitter_brightness: 0.2
 color_jitter_contrast: 0.2
 color_jitter_saturation: 0.2
 color_jitter_hue: 0.05
 allow_color_jitter_with_cached_predictions: false
 
-enable_gaussian_blur: true
+enable_gaussian_blur: false
 blur_probability: 0.5
 blur_kernel_sizes: [3, 5, 7]
 allow_gaussian_blur_with_cached_predictions: false
 
-# cached-prediction augmentation (mask_fhat noise) — applied during TRAINING only
-cached_pred_fhat_noise_strength: 1.0
+# The released experiment did not perturb cached mask latents.
+cached_pred_fhat_noise_strength: 0.0
 cached_pred_fhat_noise_mode: relative
 cached_pred_fhat_noise_clip: 3.0
 
@@ -143,7 +146,7 @@ fusion_wd_scale: 1.0
 # extra high-res fusion modules for decoder skips (initialized from scratch)
 decoder_extra_fusion_resolutions: []
 decoder_extra_fusion_num_heads: 8
-decoder_extra_fusion_num_layers: 2
+decoder_extra_fusion_num_layers: 1
 decoder_extra_fusion_cross_inner_dim: null
 decoder_extra_fusion_use_feature_rectify: false
 decoder_extra_fusion_downsample_first: false

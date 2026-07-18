@@ -32,21 +32,35 @@ pip install xformers==0.0.28.post3
 
 ## Pretrained weights
 
-Download the VQ-VAE checkpoint from the
-[original VAR release](https://github.com/FoundationVision/VAR) and the
-depth-16 initialization checkpoint from the
-[original ControlVAR release](https://github.com/lxa9867/ControlVAR):
+The released RemoteVAR and decoder-refiner weights are available from our
+[Hugging Face repository](https://huggingface.co/yilmazkorkmaz/RemoteVAR).
+Inference also requires the VQ-VAE checkpoint from the
+[original VAR release](https://github.com/FoundationVision/VAR):
 
 ```bash
 mkdir -p pretrained
+wget -O pretrained/model.safetensors \
+  https://huggingface.co/yilmazkorkmaz/RemoteVAR/resolve/main/model.safetensors
+wget -O pretrained/best_decoder_refiner.pth \
+  https://huggingface.co/yilmazkorkmaz/RemoteVAR/resolve/main/best_decoder_refiner.pth
 wget -O pretrained/vae_ch160v4096z32.pth \
   https://huggingface.co/FoundationVision/var/resolve/main/vae_ch160v4096z32.pth
+```
+
+To train RemoteVAR from the ControlVAR initialization, also download the
+depth-16 checkpoint from the
+[original ControlVAR release](https://github.com/lxa9867/ControlVAR):
+
+```bash
 wget -O pretrained/d16.pth \
   https://huggingface.co/qiuk6/ControlVAR/resolve/main/d16.pth
 ```
 
-Alternatively, pass their paths explicitly with
-`--vqvae_pretrained_path` and `--var_pretrained_path`.
+The Hugging Face repository contains weights only. The matching model
+hyperparameters are provided in `configs/change_detection.yaml` and
+`configs/decoder_refiner.yaml`. Paths can be overridden with
+`--vqvae_pretrained_path`, `--var_pretrained_path`, `--checkpoint`, and
+`--decoder_refiner_checkpoint`.
 
 ## Dataset layout
 
@@ -119,7 +133,7 @@ Single GPU:
 ```bash
 python generate_refiner_predictions.py \
   --config configs/change_detection.yaml \
-  --checkpoint /path/to/remotevar/best/model.safetensors \
+  --checkpoint pretrained/model.safetensors \
   --dataset_root /path/to/datasets \
   --out_dir predictions/remotevar_best \
   --splits train val \
@@ -135,7 +149,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python -m torch.distributed.run --standalone --nproc_per_node=8 \
   generate_refiner_predictions.py \
   --config configs/change_detection.yaml \
-  --checkpoint /path/to/remotevar/best/model.safetensors \
+  --checkpoint pretrained/model.safetensors \
   --dataset_root /path/to/datasets \
   --out_dir predictions/remotevar_best \
   --splits train val \
@@ -160,7 +174,7 @@ python -m accelerate.commands.launch --num_processes 8 \
   train_decoder_refiner.py \
   --config configs/decoder_refiner.yaml \
   --dataset_root /path/to/datasets \
-  --remotevar_checkpoint /path/to/remotevar/best/model.safetensors \
+  --remotevar_checkpoint pretrained/model.safetensors \
   --predictions_dir predictions/remotevar_best
 ```
 
@@ -171,7 +185,7 @@ RemoteVAR only:
 ```bash
 python inference.py \
   --config configs/change_detection.yaml \
-  --checkpoint /path/to/remotevar/model.safetensors \
+  --checkpoint pretrained/model.safetensors \
   --dataset_root /path/to/datasets \
   --test_dataset_name whu_cd
 ```
@@ -181,8 +195,8 @@ With a decoder refiner:
 ```bash
 python inference.py \
   --config configs/change_detection.yaml \
-  --checkpoint /path/to/remotevar/model.safetensors \
-  --decoder_refiner_checkpoint /path/to/best_decoder_refiner.pth \
+  --checkpoint pretrained/model.safetensors \
+  --decoder_refiner_checkpoint pretrained/best_decoder_refiner.pth \
   --dataset_root /path/to/datasets \
   --test_dataset_name whu_cd
 ```
